@@ -1,0 +1,32 @@
+dnsmasq:
+  customDnsEntries:
+    - address=/ssnas/192.168.0.254
+
+persistentVolumeClaim:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  size: "500Mi"
+
+serviceTCP:
+  type: LoadBalancer
+#   annotations:
+#     metallb.universe.tf/address-pool: network-services
+#     metallb.universe.tf/allow-shared-ip: pihole-svc
+
+serviceUDP:
+  type: LoadBalancer
+#   annotations:
+#     metallb.universe.tf/address-pool: network-services
+#     metallb.universe.tf/allow-shared-ip: pihole-svc
+
+adminPassword: "admin"
+
+DNS1: "8.8.8.8"
+DNS2: "8.8.4.4"
+
+hostNetwork: "false"
+privileged: "false"
+
+webHttp: "9080"
+webHttps: "9443"
