@@ -10,15 +10,15 @@ persistentVolumeClaim:
 
 serviceTCP:
   type: LoadBalancer
-#   annotations:
-#     metallb.universe.tf/address-pool: network-services
-#     metallb.universe.tf/allow-shared-ip: pihole-svc
+  annotations:
+    metallb.universe.tf/address-pool: default
+    metallb.universe.tf/allow-shared-ip: pihole-svc
 
 serviceUDP:
   type: LoadBalancer
-#   annotations:
-#     metallb.universe.tf/address-pool: network-services
-#     metallb.universe.tf/allow-shared-ip: pihole-svc
+  annotations:
+    metallb.universe.tf/address-pool: default
+    metallb.universe.tf/allow-shared-ip: pihole-svc
 
 adminPassword: "admin"
 
