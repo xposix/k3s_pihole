@@ -1,3 +1,9 @@
+# Value files for this Helm: https://hub.helm.sh/charts/mojo2600/pihole
+
+image:
+  tag: v5.1.1
+  pullPolicy: Always
+
 dnsmasq:
   customDnsEntries:
     - address=/ssnas/192.168.0.254
