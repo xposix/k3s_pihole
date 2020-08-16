@@ -18,9 +18,9 @@ K3s is a Kubernetes distribution made for Edge by Rancher. Installation instruct
 
 It comes with Traefik by default, as I am not really familiar with it and I wanted to try [Rancher's MetalLB](https://metallb.universe.tf/), I disabled Traefik along side with the internal *servicelb* component.
 
-For my "home cloud" I installed K3s over Ubuntu 20.04 by simply typing this:
+For my "home cloud" I installed K3s over Ubuntu 20.04 by simply typing this **as root**:
 
-`curl -sfL https://get.k3s.io | sh -s - server --no-deploy traefik --no-deploy servicelb`
+`# curl -sfL https://get.k3s.io | sh -s - server --no-deploy traefik --no-deploy servicelb`
 
 It does everything, even creates all the init files for K3s to come up after machine restart.
 
@@ -63,17 +63,19 @@ sudo service k3s start
 ```
 
 # Installing MetalLB
-Once the K3s cluster is up and running, we proceed with MetalLB installation. This can be done from the same K3s server or from a remote client.
-The installation is quite straightforward:
+This can be done from the same K3s server or from a remote client.
 
-First, creating the configuration, there is an example of the required ConfigMap on this git repository at *./metallb_config.yml* . There, you need to change the last lines where it tells MetalLB the range of **free** IPs that it will use in your local LAN. Once finished, save changes on the file and apply them:
-
-`kubectl apply -f metallb_config.yml`
+First, create the configuration. There is an example of the required ConfigMap on this git repository at *./metallb_config.yml* . There, you need to change the last lines where it tells MetalLB the range of **free** IPs that it will use in your local LAN. Save the changes and close the file.
 
 Now we can proceed with MetalLB installation. You may want to change `v0.9.3` to the latest version available.
 
 ```
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.3/manifests/namespace.yaml
+
+kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
+
+kubectl apply -f metallb_config.yml
+
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.3/manifests/metallb.yaml
 ```
 
@@ -81,12 +83,42 @@ kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.3/manife
 # Installing The PiHole Helm Chart
 Once K3s and MetalLB is ready, we are going to proceed to install PiHole. I normally use Helm everywhere I go, I found this Helm chart I liked at https://github.com/MoJo2600/pihole-kubernetes.
 
-Before installing PiHole, we need to deal with Ubuntu's local DNS resolution on the server. It seems to come by default with Ubuntu latest versions but it can be easily disabled by executing:
-```
-sudo systemctl disable systemd-resolved
-sudo systemctl mask systemd-resolved
-```
+## Disabling current DNS config
+Before installing PiHole, we need to deal with Ubuntu's local DNS resolution on the server. It seems to come by default with Ubuntu latest versions and conflicts with PiHole. 
 
+1. Double-check that the port is being used: 
+
+    `$ sudo lsof -i :53`
+2. If that command returns any output, it will show something similar to this:
+    ```
+    COMMAND   PID            USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+    systemd-r 610 systemd-resolve   12u  IPv4  19377      0t0  UDP localhost:domain 
+    systemd-r 610 systemd-resolve   13u  IPv4  19378      0t0  TCP localhost:domain (LISTEN)
+    ```
+3. If that is the case, go to the file `/etc/systemd/resolved.conf`, uncomment the lines DNS and DNSStubListener. Add your DNS server on `DNS` and change DNSStubListener to `no`. The final result will be similar to this one:
+    ```
+    [Resolve]
+    DNS=1.1.1.1
+    #FallbackDNS=
+    #Domains=
+    #LLMNR=no
+    #MulticastDNS=no
+    #DNSSEC=no
+    #DNSOverTLS=no
+    #Cache=no
+    DNSStubListener=no
+    #ReadEtcHosts=yes
+    ```
+
+4. Create a symbolic link for /run/systemd/resolve/resolv.conf with /etc/resolv.conf as the destination
+
+    `$ sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf`
+
+5. Reboot your system.
+
+I like this approach better than the first one I took consisting on disabling systemd-resolve. After a while, during some updates, DNS stopped working.
+
+## Deploying K8s Helm
 Finally, have a look into the `./pihole_values.yml` file, you may want to customise some configuration for your installation. 
 
 Once you are happy with your configuration, add its Mojo2600 repo to our local repository list:
