@@ -28,8 +28,8 @@ serviceUDP:
 
 adminPassword: "admin"
 
-DNS1: "8.8.8.8"
-DNS2: "8.8.4.4"
+DNS1: "1.1.1.1"
+DNS2: "1.0.0.1"
 
 hostNetwork: "false"
 privileged: "false"
