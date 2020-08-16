@@ -1,7 +1,7 @@
 # Value files for this Helm: https://hub.helm.sh/charts/mojo2600/pihole
 
 image:
-  tag: v5.1.1
+  tag: v5.1.2
   pullPolicy: Always
 
 dnsmasq:
